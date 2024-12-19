@@ -13,7 +13,9 @@ app.use(cors({ origin: '*' })); // Permite requisições de qualquer origem
 app.use('/', publicRoutes);
 app.use('/', auth, privateRoutes);
 
-app.listen(3000, () => { //arrow function, forma mais moderna de escrever uma função
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => { //arrow function, forma mais moderna de escrever uma função
   console.log('Server is running on port 3000');
 });
 
