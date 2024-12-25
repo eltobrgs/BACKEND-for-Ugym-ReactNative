@@ -1,4 +1,3 @@
-// routes/public.js
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -6,75 +5,93 @@ import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
-const JWT_SECRET= process.env.JWT_SECRET;
-//cadastro, funciona como um middleware que recebe requisição, resposta e next, 
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Endpoint de Cadastro
 router.post("/cadastro", async (req, res) => {
     try {
         const user = req.body;
-        console.log("Dados do usuário recebidos:", user); // Log dos dados recebidos
+        console.log("Dados do usuário recebidos:", user);
 
+        // Gerar hash da senha
         const salt = await bcrypt.genSalt(10);
-        console.log("Salt gerado:", salt); // Log do salt gerado
-
         const hash = await bcrypt.hash(user.password, salt);
-        console.log("Hash da senha gerado:", hash); // Log do hash gerado
 
+        // Salvar usuário no banco de dados
         const savedUser = await prisma.user.create({
             data: {
                 name: user.name,
                 email: user.email,
-                password: hash
-            }
+                password: hash,
+            },
         });
-        console.log("Usuário salvo no banco de dados:", savedUser); // Log do usuário salvo
+        console.log("Usuário salvo no banco de dados:", savedUser);
 
-        res.status(201).json(user);
+        // Gerar o token JWT
+        const token = jwt.sign({ userId: savedUser.id }, JWT_SECRET, { expiresIn: '1h' });
+
+        // Retornar o token e dados do usuário (sem a senha)
+        res.status(201).json({
+            message: "Cadastro realizado com sucesso",
+            token: token,
+            user: {
+                id: savedUser.id,
+                name: savedUser.name,
+                email: savedUser.email,
+            },
+        });
     } catch (err) {
-        console.error("Ocorreu um erro:", err); // Log do erro
-        res.status(500).json({ error: err.message });
+        console.error("Erro ao realizar cadastro:", err);
+        res.status(500).json({ error: "Erro ao realizar cadastro" });
     }
 });
 
-
-
-// Login, funciona como um middleware que recebe requisição, resposta e next
+// Endpoint de Login
 router.post("/login", async (req, res) => {
     try {
-        const userInfo = req.body;
-        console.log("Dados do usuário recebidos:", userInfo); // Log dos dados recebidos
+        const { email, password } = req.body;
+        console.log("Tentativa de login com email:", email);
 
+        // Buscar usuário pelo email
         const user = await prisma.user.findUnique({
-            where: {
-                email: userInfo.email
-            }
+            where: { email },
         });
 
         if (!user) {
+            console.log("Usuário não encontrado:", email);
             return res.status(404).json({ error: "Usuário não encontrado" });
         }
 
-        // Comparando a senha fornecida com a senha armazenada
-        const isMatch = await bcrypt.compare(userInfo.password, user.password);
-
+        // Verificar senha
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            console.log("Senha incorreta para o usuário:", email);
             return res.status(401).json({ error: "Senha incorreta" });
         }
 
-        // Gerando um token JWT
+        // Gerar o token JWT
         const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '10m' });
 
-        res.status(200).json({ message: "Login bem-sucedido", token: token });
-
-
+        res.status(200).json({
+            message: "Login bem-sucedido",
+            token: token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+            },
+        });
     } catch (err) {
-        console.error("Ocorreu um erro:", err); // Log do erro
-        res.status(500).json({ error: err.message });
+        console.error("Erro ao realizar login:", err);
+        res.status(500).json({ error: "Erro ao realizar login" });
     }
 });
 
+// Endpoint para buscar dados do usuário
 router.get("/me", async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
+
         if (!authHeader) {
             return res.status(401).json({ error: "Token não fornecido" });
         }
@@ -84,7 +101,7 @@ router.get("/me", async (req, res) => {
 
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
-            select: { id: true, name: true, email: true } // Adicione os campos necessários
+            select: { id: true, name: true, email: true }, // Campos retornados
         });
 
         if (!user) {
@@ -94,9 +111,8 @@ router.get("/me", async (req, res) => {
         res.status(200).json(user);
     } catch (err) {
         console.error("Erro ao buscar dados do usuário:", err);
-        res.status(500).json({ error: "Erro no servidor" });
+        res.status(500).json({ error: "Erro ao buscar dados do usuário" });
     }
 });
 
-
-export default router; //exportando o router para ser utilizado em outro arquivo
+export default router;
