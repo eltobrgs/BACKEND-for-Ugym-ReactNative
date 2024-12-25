@@ -72,6 +72,31 @@ router.post("/login", async (req, res) => {
     }
 });
 
+router.get("/me", async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: "Token não fornecido" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            select: { id: true, name: true, email: true } // Adicione os campos necessários
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "Usuário não encontrado" });
+        }
+
+        res.status(200).json(user);
+    } catch (err) {
+        console.error("Erro ao buscar dados do usuário:", err);
+        res.status(500).json({ error: "Erro no servidor" });
+    }
+});
 
 
 export default router; //exportando o router para ser utilizado em outro arquivo
