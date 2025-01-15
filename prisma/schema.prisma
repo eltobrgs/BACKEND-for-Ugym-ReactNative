@@ -19,5 +19,30 @@ model User {
   email   String   @unique
   name    String?
   password String 
+
+  Preferences Preferences[]
+
+  Exercices Exercices[]
 }
 
+model Preferences{
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  birthDate       DateTime
+  gender          String
+  goal            String
+  healthCondition String
+  experience      String
+  userId          String   @unique @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+
+model Exercices{
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  day         String
+  title       String
+  details     String
+  imageUrl    String
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+}
