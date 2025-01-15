@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
-
+const JWT_SECRET = process.env.JWT_SECRET;
 
 router.get('/listar-usuarios', async(req, res) => {
 
