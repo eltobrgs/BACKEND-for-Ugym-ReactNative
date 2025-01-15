@@ -7,15 +7,14 @@ import cors from 'cors';
 
 const app = express();
 
-app.use(express.json()); //middleware que permite o uso de json, um middleware é uma função que recebe requisição, resposta e next, next é uma função que chama o próximo middleware
+app.use(express.json()); // Middleware que permite o uso de JSON
 app.use(cors({ origin: '*' })); // Permite requisições de qualquer origem
 
 app.use('/', publicRoutes);
-app.use('/', auth, privateRoutes);
+app.use('/', auth, privateRoutes); // Rota privada com autenticação
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => { //arrow function, forma mais moderna de escrever uma função
-  console.log('Server is running on port 3000');
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
-
