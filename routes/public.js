@@ -121,12 +121,13 @@ router.post("/preferences", async (req, res) => {
   try {
     const { birthDate, gender, goal, healthCondition, experience } = req.body;
 
-    // Validar formato de birthDate
-    const parsedBirthDate = new Date(birthDate);
-    if (isNaN(parsedBirthDate)) {
-      return res.status(400).json({ error: "Formato de data inválido para birthDate" });
-    }
+    // Converter de DD/MM/YYYY para o formato aceito pelo JavaScript (YYYY-MM-DD)
+    const [day, month, year] = birthDate.split('/');
+    const parsedBirthDate = new Date(`${year}-${month}-${day}`);
 
+    if (isNaN(parsedBirthDate)) {
+      return res.status(400).json({ error: "Formato de data inválido para birthDate. Use DD/MM/YYYY" });
+    }
     // Verificar o token de autenticação
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -193,42 +194,39 @@ router.post("/preferences", async (req, res) => {
 // Endpoint para buscar as preferências do usuário
 router.get("/preferences", async (req, res) => {
   try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-          return res.status(401).json({ error: "Token não fornecido" });
-      }
+    // Verificar o token de autenticação
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: "Token não fornecido" });
+    }
 
-      const token = authHeader.split(" ")[1];
-      const decoded = jwt.verify(token, JWT_SECRET);
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-      const user = await prisma.user.findUnique({
-          where: { id: decoded.userId },
-      });
+    // Buscar usuário pelo ID decodificado no token
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
 
-      if (!user) {
-          return res.status(404).json({ error: "Usuário não encontrado" });
-      }
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
 
-      const preferences = await prisma.preferences.findUnique({
-          where: { userId: user.id },
-      });
+    // Buscar as preferências do usuário
+    const preferences = await prisma.preferences.findUnique({
+      where: { userId: user.id },
+    });
 
-      if (!preferences) {
-          return res.status(404).json({ error: "Preferências não encontradas" });
-      }
+    if (!preferences) {
+      return res.status(404).json({ error: "Preferências não encontradas" });
+    }
 
-      // Formatar a data de nascimento
-      const formattedBirthDate = new Date(preferences.birthDate).toLocaleDateString('pt-BR');
-
-      res.status(200).json({
-          ...preferences,
-          birthDate: formattedBirthDate, // Envia a data formatada
-      });
+    // Retornar as preferências do usuário
+    res.status(200).json(preferences);
   } catch (err) {
-      console.error("Erro ao buscar preferências:", err);
-      res.status(500).json({ error: "Erro ao buscar preferências" });
+    console.error("Erro ao buscar preferências:", err);
+    res.status(500).json({ error: "Erro ao buscar preferências" });
   }
 });
-
 
 export default router;
