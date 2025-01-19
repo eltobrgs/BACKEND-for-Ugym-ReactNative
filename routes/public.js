@@ -191,7 +191,8 @@ router.post("/preferences", async (req, res) => {
   }
 });
 
-// Endpoint para buscar as preferências do usuário
+
+//endpoint para buscar preferências
 router.get("/preferences", async (req, res) => {
   try {
     // Verificar o token de autenticação
@@ -221,12 +222,19 @@ router.get("/preferences", async (req, res) => {
       return res.status(404).json({ error: "Preferências não encontradas" });
     }
 
-    // Retornar as preferências do usuário
-    res.status(200).json(preferences);
+    // Formatar a data de nascimento
+    const formattedBirthDate = new Date(preferences.birthDate).toLocaleDateString('pt-BR');
+
+    // Retornar as preferências com a data formatada
+    res.status(200).json({
+      ...preferences,
+      birthDate: formattedBirthDate, // Sobrescrever a data formatada
+    });
   } catch (err) {
     console.error("Erro ao buscar preferências:", err);
     res.status(500).json({ error: "Erro ao buscar preferências" });
   }
 });
+
 
 export default router;
