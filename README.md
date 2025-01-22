@@ -25,7 +25,7 @@
 - **[Prisma](https://www.prisma.io/)**: ORM para interagir com o banco de dados de forma segura e eficiente.
 - **[JWT](https://jwt.io/)**: Autenticação baseada em JSON Web Tokens.
 - **[bcrypt](https://www.npmjs.com/package/bcrypt)**: Biblioteca para hashing de senhas de maneira segura.
-- **[SQLite/PostgreSQL](https://www.prisma.io/docs/concepts/database-connectors/postgresql)**: Banco de dados utilizado para armazenar dados do usuário e treinos.
+- **[MongoDB/ banco de dados não relacional, também conhecido como NoSQL ](https://www.prisma.io/docs/concepts/database-connectors/postgresql)**: Banco de dados utilizado para armazenar dados do usuário e treinos.
 
 ---
 
