@@ -90,5 +90,54 @@ router.post("/atividades", async (req, res) => {
   }
 });
 
+// Endpoint para obter atividades do usuário autenticado
+router.get('/atividades', async (req, res) => {
+  try {
+    // Validar o token de autenticação
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: "Token não fornecido" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: "Token inválido ou expirado" });
+    }
+
+    // Buscar o usuário pelo ID decodificado no token
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    // Buscar atividades associadas ao usuário
+    const activities = await prisma.activity.findMany({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        lightColor: true,
+        color: true,
+        darkColor: true,
+      },
+    });
+
+    res.status(200).json({
+      message: "Atividades listadas com sucesso",
+      activities,
+    });
+  } catch (err) {
+    console.error("Erro ao listar atividades:", err);
+    res.status(500).json({ error: "Erro ao listar atividades" });
+  }
+});
+
 
 export default router;
